@@ -1,4 +1,4 @@
-#Cài đặt docker trên hệ điều hành
+# Cài đặt docker trên hệ điều hành
 Hiện giờ Docker có đầy đủ bản cài đặt trên Windows, MacOS, Linux. Tùy thuộc bạn muốn chạy trên môi trường nào thì tải về bản cài đặt tương ứng để cài đặt.
 
 ## Cài Docker trên macOS
