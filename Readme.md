@@ -62,60 +62,62 @@ docker container ls -a
    - `--restart=always` : Thiết lập để Docker tự khởi động container
 
 ```
+docker container attach containerid
 # Vào terminal container đang chạy:
-    docker container attach containerid
+    
+docker exec -it containeri
+# chạy một lệnh command trên container đang hoạt động  
 
-# chạy một lệnh command trên container đang hoạt động 
-    docker exec -it containeri
-
+docker stop containerid
 # Dừng hoạt động một containerd command
-    docker stop containerid 
-
+     
+docker start -i containerid
 # Chạy một container
-    docker start -i containerid
-
+    
+docker restart containe
 # Khởi động lại container 
-    docker restart containe
-
+    
+docker rm container
 # Xóa containerrid
-    docker rm container
 
+CTRL +P, CTRL + Q    
 # Thoát -it terminal nhưng container vẫn chạyid
-    CTRL +P, CTRL + Q
+    
 
+docker commit containerid imagename
 # imageversion: Lưu một container đang dừng thành Image
-    docker commit containerid imagename
 
+docker save --output myimag
 # Lưu image ra đĩa
-    docker save --output myimag
-
+    
+docker load -i myimage.tar
 # Nạp Image trên đĩa vào Dockere.tar myimage_id
-    docker load -i myimage.tar
-
+    
+docker tag image_id imagename:version
 #  Đổi tên Image
-    docker tag image_id imagename:version
-
+    
+docker network ls
 # Liệt kê các networkd imagename
-    docker network ls
 
+docker network create --driver bridge name-network
 # Tạo mạng kiểu bridge đặt tên là name-network
-    docker network create --driver bridge name-network
-
+    
+docker network connect name-network name-container
 # Nối container vào mạng name-network
-    docker network connect name-network name-container
-
+   
+docker inspect name_or_id_of_image_
 # Lấy thông tin về image hoặc containerainer
-    docker inspect name_or_id_of_image_
 
+docker history name_or_id_of_imag
 # Lấy thông lịch sử tạo thành image
-    docker history name_or_id_of_imag
 
+docker diff container-name-or-id
 # Theo dõi thay đổi các file trên containere
-    docker diff container-name-or-id
-
+    
+docker logs -f container-name-or-i
 # Đọc log container
-    docker logs -f container-name-or-i
-
+    
+docker stats container-name-or-id
 # Đo lường thông tin
-    docker stats container-name-or-id
+
 ```
