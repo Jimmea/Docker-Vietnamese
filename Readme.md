@@ -10,7 +10,7 @@ Một số ưu điểm của Docker Container so với công nghệ ảo hóa:
 - Container rất nhỏ, vì vậy mà trên một máy Host số container chạy song song với nhau nhiều hơn số máy áo chạy song song.
 
 Chuyên mục này là các bài viết hướng dẫn sử dụng Docker, chú trọng vào thực hành để có thể nhanh chóng áp dụng thực tế.
-1) [Cài đặt Docker, Cơ bản](https://github.com/Jimmea/Docker-Vietnamese/blob/master/1_Install.md])
+1) [Cài đặt Docker, Cơ bản](1_Install.md)
 2) Lệnh Docker: commit, load
 3) Chia sẻ dữ liệu
 4) Mạng NetWork
