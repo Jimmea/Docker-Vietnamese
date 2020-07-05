@@ -22,24 +22,24 @@ Thông tin:
 
 Ví dụ:
 ```
-docker run -it -v /home/sitesdata:/home/data ubuntu
+docker run -it -v /home/sitesdata:/home/data my_ubuntu ubuntu
 ```
 
 Lúc này, dữ liệu trên thư mục `/home/sitesdata/` của máy Host thì trong container có thể truy cập, cập nhật sửa đổi ... thông qua đường dẫn `/home/data`
 
 ## Chia sẻ dữ liệu giữa các Container
-Có container với id hoặc name là `container_first`, trong đó nó có mount thư mục Host vào (hoặc đã được chia sẻ tử Container khác)
+Có container với id hoặc name là `my_ubuntu`, trong đó nó có mount thư mục Host vào (hoặc đã được chia sẻ tử Container khác)
 
-Giờ chạy, tạo container khác cũng nhận thư mục chia sẻ dữ liệu như `container_first`. Để làm điều đó thêm vào tham số `--volumes-from container_first`
+Giờ chạy, tạo container khác cũng nhận thư mục chia sẻ dữ liệu như `my_ubuntu`. Để làm điều đó thêm vào tham số `--volumes-from container_first`
 
 Ví dụ:
 ```
-docker run -it --volumes-from container_first ubuntu
+docker run -it --name my_ubuntu_v2 --volumes-from my_ubuntu ubuntu
 ```
 
-Bạn đã tạo ra một Container nhận thư mục chia sẻ như container có ID hoặc tên là container_first tạo trước đó.
+Bạn đã tạo ra một Container nhận thư mục chia sẻ như container có ID hoặc tên là my_ubuntu tạo trước đó.
 
-## Quản lý các ổ đĩa với docker volume
+## Quản lý các ổ đĩa với docker volume 
 Có thể tạo và quản lý các ổ đĩa bên ngoài container, lệnh làm việc với ổ đĩa là docker volume với các trường hợp cụ thể:
 
 Liệt kê danh sách các ổ đĩa:
@@ -65,19 +65,21 @@ docker volume rm name_volume
 **Mount một ổ đĩa vào container (--mount)**
 ```
 # Tạo ổ đĩa có tên firstdisk
-docker volume create firstdisk
+docker volume create disk_one
 
 # Mount ổ đĩa vào container
-# container truy cập tại /home/firstdisk
+# container truy cập tại /home/disk_one
 
-docker run -it --mount source=firstdisk,target=/home/firstdisk  ubuntu
+docker run -it --name my_ubuntu_v3 --mount source=disk_one,target=/home/disk_one ubuntu
+docker rm my_ubuntu_v3
+docker run -it --name my_ubuntu_v4 --mount source=disk_one,target=/home/disk_one ubuntu
 ```
 
 **Gán ổ đĩa vào container khi tạo container (-v)**:
 
 Nếu muốn ổ đĩa bind dữ liệu đến một thư mục cụ thể của máy HOST thì tạo ổ đĩa với tham số như sau:
 ```
-docker volume create --opt device=path_in_host --opt type=none --opt o=bind  volumename
+docker volume create --opt device=path_in_host --opt type=none --opt o=bind  DISK1
 ```
 
 Sau đó ổ đĩa này gán vào container với tham số -v (không dùng --mount)
@@ -85,13 +87,50 @@ Ví dụ:
 
 ```
 # Tạo ổ đĩa có tên mydisk (dữ liệu lưu tại /home/mydata)
-docker volume create --opt device=/home/mydata --opt type=none --opt o=bind  mydisk
-
-# Gán ổ đĩa vào container tại (/home/sites)
-docker run -it -v mydisk:/home/sites ubuntu
+docker volume create --opt device=/home/hung/Desktop/data_docker/ --opt type=none --opt o=bind Disk1
+ 
+# Gán ổ đĩa vào container tại (/home/data_docker)
+docker run -it -v mydisk:/home/data_docker ubuntu
 ```
 
 Xóa tất cả các ổ đĩa không được sử dụng bởi container nào:
+```
+docker volume prune
+```
+
+## Tổng hợp
+1. ánh xạ thư mục:
+```
+docker run -it -v /home/hung/Desktop/data_docker:/home/data_docker --name my_ubuntu ubuntu
+```
+2. Chia sẻ thư mục
+```
+docker run -it --name my_ubuntu_v2 --volumes-from my_ubuntu ubuntu
+```
+
+3. Tạo 1 ổ đĩa
+```
+docker volume create disk_one
+docker volume inspect disk_one
+```
+
+4. Mount môt ổ đĩa 
+```
+docker run -it --name my_ubuntu_v3 --mount source=disk_one,target=/home/data_docker ubuntu
+```
+
+5. Gán một ổ đĩa mount tới folder của host
+```
+docker volume create --opt device=/home/hung/Desktop/data_docker/ --opt type=none --opt o=bind disk_two
+docker volume inspect disk_two
+```
+
+6. Gán ổ đĩa vào container
+```
+docker run -it -v disk_two:/home/data_docker --name my_ubuntu_disk_host ubuntu
+```
+
+7. Xóa tất cả các ổ đĩa không được sử dụng bởi container nào:
 ```
 docker volume prune
 ```

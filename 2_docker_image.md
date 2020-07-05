@@ -77,3 +77,40 @@ docker load -i myimage.tar
 ```
 docker tag image_id imagename:version
 ```
+
+## TỔng hợp
+**1. Tải hệ điều hành centos về nếu chưa có**
+```
+docker pull centos
+```
+
+**2. Tạo / chạy một container đặt tên là mycentos của centos**
+```
+docker run -it --name mycentos centos
+```
+
+**3. Cài SSH Client vào container mycentos**
+```
+yum install openssh-clients
+```
+
+**4. Lưu container mycentos thành image đặt tên là centos-ssh:v1**
+```
+docker commit mycentos centos-ssh:v1
+```
+
+**5. Đổi tên một Image đang có**
+```
+docker tag centos-ssh:v1 centos-ssh:v2
+```
+
+**6. Lưu image ra file**
+```
+docker save --output centos-ssh-v2.tar centos-ssh:v2
+```
+
+**7. Nạp image vào docker**
+```
+docker load -i centos-ssh-v2.tar
+```
+

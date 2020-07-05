@@ -243,7 +243,7 @@ docker rm containerid
 OR Docker rm containerid -f 
 ```
 
-## Tóm tắt các lệnh làm quen
+## Tổng hợp
 
 ```
 #kiểm tra phiên bản
