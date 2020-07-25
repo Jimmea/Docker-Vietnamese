@@ -1,12 +1,12 @@
 #Mạng network bridge trong Docker kết nối các container với nhau
 Cách tạo một network trong Docker, thực hành cài đặt Apache, PHP, MySQL và kết nối chúng vào mạng, cài đặt WordPress trên Docker
 
-- Liên kết mạng các Container
-- Cài đặt PHP
-- Cài đặt Apache
-- Liên kết Apache MySQL với nhau
-- Cài đặt MySQL
-- Cài đặt Wordpress
+1. Liên kết mạng các Container
+2. Cài đặt PHP
+3. Cài đặt Apache
+4. Liên kết Apache MySQL với nhau
+5. Cài đặt MySQL
+6. Cài đặt Wordpress
 
 ## Network trong Docker, liên kết mạng các container
 
@@ -304,10 +304,135 @@ Như vậy đã hoàn thành thiết lập Apache - PHP trên 2 container khác 
 
 ## Cài đặt MySQL
 
+Trong phần này sẽ tạo và cài đặt mysql trên một container để cuối cùng có bộ ba container Apache HTTP - PHP 7.3 - MySQL 8, như vậy có một webserver hoàn chỉnh để cài đặt, phát triển các ứng dụng web
 
 
 
+Tạo, chạy container từ image `mysql` (image này nếu chưa có ở local, nó sẽ tự tải về), đặt tên là `c-mysql`
+```
+docker run -it --network www-net --name c-mysql -h mysql \
+        -v "/mycode/db":/var/lib/mysql -e MYSQL_ROOT_PASSWORD=abc123  mysql
+```
+
+Các tham số của lệnh trên:
+
+- `--network www-net` container sẽ kết nối với mạng có tên www-net (cùng mạng với c-php, c-httpd)
+- `-e MYSQL_ROOT_PASSWORD=abc123` đặt password cho user root, quản trị mysql là abc123
+- `-v "/mycode/db":/var/lib/mysql` nơi lưu trữ các database là ở thư mục `/mycode/db` của máy Host, làm điểu này để có không mất db khi cần xóa container, hoặc khi cần sử dụng lại các db cũ.
 
 
+Sau lệnh này, bạn đang chạy MySQL cùng mạng với PHP, APACHE và cổng mở là 3306, file cấu hình ở /etc/mysql/my.cnf, có thể thoát khỏi terminal đang chạy với tổ hợp phím CTRL + P, CTRL + Q
 
 
+Đây là mysql 8, mặc định không sử dụng plugin mysql_native_password, để các ứng dụng thông dụng kết nối dễ dàng tương thích bạn có thể chỉnh file cấu hình để sử dụng loại plugin này.
+
+
+Trước tiên vào lại container c-mysql cài đặt trình soạn thảo nano
+
+```
+docker exec -it c-mysql bash
+apt-get update
+apt-get install nano
+```
+
+
+Mở file `my.cnf`
+```
+nano /etc/mysql/my.cnf
+```
+
+Thêm vào nội dung:
+
+```
+[mysqld]
+default-authentication-plugin=mysql_native_password
+```
+
+Ra khỏi container và khởi động lại `docker restart c-mysql`, giờ thì đã có server MySQL đang chạy, các ứng dụng cùng mạng muốn sử dụng có thể kết nối đến nó qua cổng 3306
+
+```
+docker exec -it c-mysql bash                       #nhảy vào container
+mysql -uroot -pabc123                              #kết nối vào MySQL Server
+
+#Từ dấu nhắc MySQL, Tạo một user tên testuser với password là testpass
+CREATE USER 'testuser'@'%' IDENTIFIED BY 'testpass';
+
+#Tạo db có tên db_testdb
+create database db_testdb;
+
+#Cấp quyền cho user testuser trên db - db_testdb
+GRANT ALL PRIVILEGES ON db_testdb.* TO 'testuser'@'%';
+flush privileges;
+
+
+show database;            #Xem các database đang có, kết quả có db bạn vừa tạo
+exit;                     #Ra khỏi MySQL Server
+```
+
+Đến đây đã hoàn hàm xây dựng xong các Container với 3 thành phần: `APACHE HTTPD - MYSQL - PHP` để phát triển và chạy các ứng dụng Web. Sau đây sẽ là ví dụ cài đặt `Wordpress`
+
+## Cài đặt Wordpress trên Docker
+Ta sẽ cấu hình để chạy một tên miền ảo, ví dụ này chọn `mywordpressblog.com`, trước tiên vào chỉnh file host của máy tại `/etc/host` (trên Windows tại `C:\Windows\System32\drivers\etc\hosts`), thêm vào:
+```
+127.0.0.1	mywordpressblog.com
+```
+
+Tải Wordpress (Download Wordpress) về, giải nén vào thư mục máy host /mycode/php/blog (Tương ứng chính là thư mục /home/phpcode/blog trong container). Tiếp theo vào container c-httpd, tạo một VirtualHost cho tên miền này, cấu hình để thư mục làm việc là /home/phpcode/blog/:
+
+Mở `httpd.conf` thêm vào cuối:
+<VirtualHost *:80>
+    ServerName mywordpressblog.com
+    ServerAdmin hungokata@gmail.com
+    DocumentRoot /home/phpcode/blog/
+    CustomLog /dev/null combined
+    #LogLevel Debug
+    ErrorLog /home/phpcode/blog/error.log
+    <Directory /home/phpcode/blog/>
+        Options -Indexes -ExecCGI +FollowSymLinks -SymLinksIfOwnerMatch
+        DirectoryIndex index.php
+        Require all granted
+        AllowOverride None
+    </Directory>
+</VirtualHost>
+
+Lưu lại và khởi động lại `c-httpd` (apache).
+Vào container `c-mysql` để tạo một database cho user `testuser` làm database wordpress.
+
+```
+docker exec -it c-mysql bash
+mysql -uroot -pabc123
+create database wp_blog;
+GRANT ALL PRIVILEGES ON wp_blog.* TO 'testuser'@'%';
+flush privileges;
+```
+
+Tạo xong, ra khỏi container c-mysql
+
+Trong code Wordpress tải về, đổi tên file `wp-config-sample.php thành wp-config.php`, rồi chỉnh các thông tin thành như sau:
+
+```
+/**Tên database đã tạo wp_blog*/
+define( 'DB_NAME', 'wp_blog' );
+
+/** MySQL database username: user đã tạo ở c-mysql */
+define( 'DB_USER', 'testuser' );
+
+/** MySQL database password: password này đã tạo ở c-mysql */
+define( 'DB_PASSWORD', 'testpass' );
+
+/** MySQL hostname: tên của container chứa MySQL Server */
+define( 'DB_HOST', 'c-mysql' );
+```
+
+
+Bắt đầu cài đặt, vào trình duyệt gõ địa chỉ http://mywordpressblog.com:8080
+
+Sau khi cài đặt, truy cập địa chỉ http://mywordpressblog.com:8080
+
+Vậy là một trang WordPess đã hoạt động thành công, điều đó chứng tỏ 3 container độc lập ở trên đã kết nối lại với nhau chạy ứng dụng. Mặc dùng có thể dùng đến file Dockerfile, quá trình tạo các container như trên nhanh và đơn giản hơn, nhưng ở thời điểm đang tìm hiểu hãy thực hiện thủ công như vậy sẽ nắm rõ cách thức hoạt động hơn.
+
+## Tổng kết
+
+
+## Reference
+https://xuanthulab.net/mang-network-bridge-trong-docker-ket-noi-cac-container-voi-nhau.html#mysql 
